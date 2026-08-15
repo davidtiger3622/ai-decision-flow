@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useFlowStore } from "@/lib/store";
 import { DecisionNode } from "./decision-node";
+import { GraphIO } from "./graph-io";
 
 const statusColors: Record<string, string> = {
   running: "bg-blue-100 text-blue-700",
@@ -55,6 +56,7 @@ export function FlowCanvas() {
         >
           Run Workflow
         </Button>
+        <GraphIO />
         {runState && (
           <Badge className={statusColors[runState.status]}>
             {runState.status}
