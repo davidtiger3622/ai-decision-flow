@@ -43,6 +43,10 @@ Inngest; the graph is edited and visualized with React Flow.
 5. Open http://localhost:3000 for the app and http://localhost:8288 for the
    Inngest dashboard.
 
+## Screenshot
+
+![Workflow execution](docs/screenshots/execution.png)
+
 ## How it works
 
 1. Add decision nodes to the canvas and give each one a prompt
