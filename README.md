@@ -1,5 +1,7 @@
 # AI Decision Flow
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A visual AI workflow builder where each node represents an AI decision step
 that evaluates a prompt and returns YES or NO. Execution is orchestrated by
 Inngest; the graph is edited and visualized with React Flow.
