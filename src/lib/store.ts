@@ -8,14 +8,13 @@ import {
   type EdgeChange,
   type Connection,
 } from "@xyflow/react";
-import type { DecisionNodeData, RunState } from "@/types/flow";
+import type { DecisionNodeData, DecisionEdgeData, RunState } from "@/types/flow";
 
 type FlowNode = Node<DecisionNodeData>;
 
 type FlowState = {
   nodes: FlowNode[];
   edges: Edge[];
-  runId: string | null;
   runState: RunState | null;
   onNodesChange: (changes: NodeChange<FlowNode>[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
@@ -32,7 +31,7 @@ type FlowState = {
 let nodeCounter = 1;
 let pollHandle: ReturnType<typeof setInterval> | null = null;
 
-function buildEdge(connection: Connection): Edge {
+function buildEdge(connection: Connection): Edge<DecisionEdgeData> {
   const branch = connection.sourceHandle === "yes" ? "yes" : "no";
   const color = branch === "yes" ? "#16a34a" : "#dc2626";
 
@@ -66,7 +65,6 @@ function markActiveEdges(edges: Edge[], activeNodeId: string | null): Edge[] {
 export const useFlowStore = create<FlowState>((set, get) => ({
   nodes: [],
   edges: [],
-  runId: null,
   runState: null,
 
   onNodesChange: (changes) => {
@@ -152,7 +150,6 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       body: JSON.stringify({ nodes: graphNodes, edges: graphEdges }),
     });
     const { runId } = await res.json();
-    set({ runId });
 
     if (pollHandle) clearInterval(pollHandle);
 
