@@ -5,6 +5,7 @@ import {
   appendLog,
   completeRun,
   failRun,
+  setCurrentNode,
 } from "@/lib/execution-store";
 import type { DecisionNodeData } from "@/types/flow";
 
@@ -58,6 +59,10 @@ export const runWorkflow = inngest.createFunction(
       while (current && steps < maxSteps) {
         const node = current;
         steps++;
+
+        await step.run(`mark-active-${node.id}`, async () => {
+          setCurrentNode(runId, node.id);
+        });
 
         const decision = await step.run(`decide-${node.id}`, async () => {
           if (!node.data.prompt?.trim()) {

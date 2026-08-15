@@ -19,6 +19,7 @@ export type ExecutionLogEntry = {
 export type RunStatus = "running" | "completed" | "error";
 
 export type RunState = {
+  currentNodeId?: string | null;
   status: RunStatus;
   log: ExecutionLogEntry[];
   error?: string;

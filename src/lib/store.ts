@@ -26,10 +26,42 @@ type FlowState = {
   setNodeStatus: (id: string, status: DecisionNodeData["status"]) => void;
   resetNodeStatuses: () => void;
   runWorkflow: () => Promise<void>;
+  setGraph: (nodes: FlowNode[], edges: Edge[]) => void;
 };
 
 let nodeCounter = 1;
 let pollHandle: ReturnType<typeof setInterval> | null = null;
+
+function buildEdge(connection: Connection): Edge {
+  const branch = connection.sourceHandle === "yes" ? "yes" : "no";
+  const color = branch === "yes" ? "#16a34a" : "#dc2626";
+
+  return {
+    id: `edge-${connection.source}-${connection.target}-${branch}`,
+    source: connection.source!,
+    target: connection.target!,
+    sourceHandle: connection.sourceHandle,
+    targetHandle: connection.targetHandle,
+    label: branch.toUpperCase(),
+    style: { stroke: color, strokeWidth: 2 },
+    labelStyle: { fill: color, fontWeight: 600, fontSize: 10 },
+    data: { branch },
+  };
+}
+
+function markActiveEdges(edges: Edge[], activeNodeId: string | null): Edge[] {
+  return edges.map((edge) => {
+    const isActive = activeNodeId !== null && edge.target === activeNodeId;
+    return {
+      ...edge,
+      animated: isActive,
+      style: {
+        ...edge.style,
+        strokeWidth: isActive ? 3.5 : 2,
+      },
+    };
+  });
+}
 
 export const useFlowStore = create<FlowState>((set, get) => ({
   nodes: [],
@@ -46,22 +78,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   },
 
   onConnect: (connection) => {
-    const branch = connection.sourceHandle === "yes" ? "yes" : "no";
-    const color = branch === "yes" ? "#16a34a" : "#dc2626";
-
-    const newEdge: Edge = {
-      id: `edge-${connection.source}-${connection.target}-${branch}`,
-      source: connection.source!,
-      target: connection.target!,
-      sourceHandle: connection.sourceHandle,
-      targetHandle: connection.targetHandle,
-      label: branch.toUpperCase(),
-      style: { stroke: color, strokeWidth: 2 },
-      labelStyle: { fill: color, fontWeight: 600, fontSize: 10 },
-      data: { branch },
-    };
-
-    set({ edges: [...get().edges, newEdge] });
+    set({ edges: [...get().edges, buildEdge(connection)] });
   },
 
   addNode: () => {
@@ -109,7 +126,12 @@ export const useFlowStore = create<FlowState>((set, get) => ({
         ...node,
         data: { ...node.data, status: "idle" },
       })),
+      edges: markActiveEdges(get().edges, null),
     });
+  },
+
+  setGraph: (nodes, edges) => {
+    set({ nodes, edges });
   },
 
   runWorkflow: async () => {
@@ -140,16 +162,21 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       const runState: RunState = await statusRes.json();
       set({ runState });
 
-      const seenNodeIds = new Set<string>();
       for (const entry of runState.log) {
-        seenNodeIds.add(entry.nodeId);
         setNodeStatus(entry.nodeId, entry.decision);
       }
+
+      if (runState.currentNodeId) {
+        setNodeStatus(runState.currentNodeId, "running");
+      }
+
+      set({ edges: markActiveEdges(edges, runState.currentNodeId ?? null) });
 
       if (runState.status !== "running") {
         if (pollHandle) clearInterval(pollHandle);
         pollHandle = null;
+        set({ edges: markActiveEdges(get().edges, null) });
       }
-    }, 1500);
+    }, 400);
   },
 }));
